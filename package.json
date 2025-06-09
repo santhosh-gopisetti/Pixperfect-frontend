@@ -1,11 +1,23 @@
 {
+  "name": "pixperfect-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint ."
+  },
   "dependencies": {
     "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "react-router-dom": "^7.6.2"
+    "react-dom": "^18.2.0"
   },
   "devDependencies": {
-    "@vitejs/plugin-react": "^4.5.1",
-    "vite": "^6.3.5"
-  }
+    "@vitejs/plugin-react": "^4.0.0",
+    "vite": "^4.5.0"
+  },
+  "engines": {
+  "node": ">=18"
 }
+}
+
