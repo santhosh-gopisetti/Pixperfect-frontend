@@ -1,4 +1,5 @@
-﻿import { defineConfig } from 'vite';
+﻿// vite.config.js
+import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
 export default defineConfig({
@@ -10,17 +11,16 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: './index.html',
-        worker: './src/imageProcessor.js'
-      }
-    }
+      },
+    },
   },
   server: {
     proxy: {
       '/api': {
         target: process.env.REACT_APP_API_URL || 'http://localhost:5001',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, '')
-      }
-    }
-  }
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
+    },
+  },
 });
