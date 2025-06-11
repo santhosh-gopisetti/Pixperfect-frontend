@@ -1,7 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useLocation, useNavigate } from 'react-router-dom';
-import Cropper from "cropperjs";
-import "cropperjs/dist/cropper.css";
 import axios from 'axios';
 import { debounce, throttle } from 'lodash';
 import "../App.css";
@@ -41,7 +39,7 @@ const CanvasWrapper = React.memo(({ editedImage, currentFilters, blendImage, ble
 ));
 
 function Editor() {
-  // State and refs (unchanged)
+  // State and refs (removed crop-related states)
   const [image, setImage] = useState(null);
   const [editedImage, setEditedImage] = useState(null);
   const [blendImage, setBlendImage] = useState(null);
@@ -50,8 +48,6 @@ function Editor() {
   const [overlayImage, setOverlayImage] = useState(null);
   const [overlayProps, setOverlayProps] = useState({ x: 50, y: 50, scale: 1, opacity: 1.0, dragging: false, width: 100, height: 100 });
   const [isLoading, setIsLoading] = useState(false);
-  const [isCropping, setIsCropping] = useState(false);
-  const [cropRatio, setCropRatio] = useState(0);
   const [error, setError] = useState(null);
   const [history, setHistory] = useState([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
@@ -95,8 +91,6 @@ function Editor() {
     invert: 0,
   });
 
-  const imgRef = useRef(null);
-  const cropperRef = useRef(null);
   const canvasRef = useRef(null);
   const previewCanvasRef = useRef(null);
   const canvasContainerRef = useRef(null);
@@ -110,13 +104,6 @@ function Editor() {
 
   const blendModes = ["normal", "multiply", "screen", "overlay", "darken", "lighten", "difference", "exclusion"];
   const availableFonts = ["Arial", "Times New Roman", "Georgia", "Roboto", "Helvetica", "Courier New"];
-  const cropRatios = [
-    { label: "Freeform", value: 0 },
-    { label: "1:1 (Square)", value: 1 },
-    { label: "4:3", value: 4 / 3 },
-    { label: "16:9", value: 16 / 9 },
-    { label: "3:2", value: 3 / 2 },
-  ];
 
   // Initialize Web Worker (unchanged)
   useEffect(() => {
@@ -132,51 +119,6 @@ function Editor() {
       setError('Failed to initialize image processing worker.');
     }
   }, []);
-
-  // Initialize Cropper.js when isCropping changes
-  useEffect(() => {
-    if (isCropping && imgRef.current && editedImage) {
-      console.log('Initializing Cropper.js with ratio:', cropRatio);
-      try {
-        // Destroy any existing cropper instance
-        if (cropperRef.current) {
-          cropperRef.current.destroy();
-          cropperRef.current = null;
-        }
-
-        // Initialize Cropper.js
-        cropperRef.current = new Cropper(imgRef.current, {
-          aspectRatio: cropRatio || NaN, // Use NaN for freeform crop
-          viewMode: 1, // Restrict crop box to image
-          autoCropArea: 0.8, // Default crop area (80% of image)
-          responsive: true,
-          zoomable: true,
-          scalable: true,
-          movable: true,
-          background: false,
-          ready: () => {
-            console.log('Cropper.js initialized successfully');
-          },
-        });
-      } catch (err) {
-        console.error('Failed to initialize Cropper.js:', err);
-        setError('Failed to initialize cropping tool.');
-        setIsCropping(false);
-      }
-    } else if (!isCropping && cropperRef.current) {
-      console.log('Destroying Cropper.js');
-      cropperRef.current.destroy();
-      cropperRef.current = null;
-    }
-
-    // Cleanup on unmount
-    return () => {
-      if (cropperRef.current) {
-        cropperRef.current.destroy();
-        cropperRef.current = null;
-      }
-    };
-  }, [isCropping, editedImage, cropRatio]);
 
   const resizeImage = useCallback((img, maxDimension = 400) => {
     let width = img.width;
@@ -288,7 +230,7 @@ function Editor() {
     };
   }, [location.state, navigate]);
 
-  // Modified drawCanvas (unchanged from original, included for completeness)
+  // drawCanvas (unchanged)
   const drawCanvas = useCallback(throttle((imgSrc, filters, blendImg = null, mode = "normal", opacity = 50, text = null, paths = [], overlay = null, overlayProps = { x: 50, y: 50, scale: 1, opacity: 1.0 }, targetCanvas = canvasRef.current) => {
     if (!targetCanvas || !canvasContainerRef.current) {
       console.error('drawCanvas: Invalid canvas or container', { targetCanvas, canvasContainer: canvasContainerRef.current });
@@ -760,78 +702,6 @@ function Editor() {
     }
   }, [editedImage, currentFilters, blendImage, blendMode, blendOpacity, textOverlay, overlayProps, resizeImage]);
 
-  // Modified handleCrop function
-  const handleCrop = useCallback(() => {
-    if (!cropperRef.current || !imgRef.current) {
-      console.error('handleCrop: Cropper or image not initialized');
-      setError('Cropper or image not initialized.');
-      return;
-    }
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const cropCanvas = cropperRef.current.getCroppedCanvas({
-        imageSmoothingEnabled: true,
-        imageSmoothingQuality: 'high',
-      });
-
-      if (!cropCanvas) {
-        console.error('handleCrop: Failed to get cropped canvas');
-        setError('Failed to crop image: No cropped area selected.');
-        setIsLoading(false);
-        return;
-      }
-
-      const croppedDataUrl = cropCanvas.toDataURL("image/png");
-      console.log('Cropped image generated:', croppedDataUrl.substring(0, 50));
-
-      // Update canvas dimensions to match cropped image
-      if (canvasRef.current) {
-        canvasRef.current.width = cropCanvas.width;
-        canvasRef.current.height = cropCanvas.height;
-      }
-
-      // Update states
-      setEditedImage(croppedDataUrl);
-      setImage(croppedDataUrl);
-      setDrawingPaths([]);
-      setOverlayImage(null);
-      setOverlayProps({ x: cropCanvas.width / 2, y: cropCanvas.height / 2, scale: 1, opacity: 1.0, dragging: false, width: 100, height: 100 });
-      setTextOverlay({ ...textOverlay, x: cropCanvas.width / 2, y: cropCanvas.height / 2, dragging: false });
-      
-      // Save to history
-      saveToHistory(
-        croppedDataUrl,
-        currentFilters,
-        blendImage,
-        blendMode,
-        blendOpacity,
-        { ...textOverlay, x: cropCanvas.width / 2, y: cropCanvas.height / 2, dragging: false },
-        [],
-        null,
-        { x: cropCanvas.width / 2, y: cropCanvas.height / 2, scale: 1, opacity: 1.0, dragging: false, width: 100, height: 100 }
-      );
-
-      // Destroy cropper and exit crop mode
-      cropperRef.current.destroy();
-      cropperRef.current = null;
-      setIsCropping(false);
-      setIsLoading(false);
-      console.log('Crop applied successfully');
-    } catch (err) {
-      console.error('Failed to crop image:', err);
-      setError('Failed to crop image: ' + err.message);
-      setIsLoading(false);
-      if (cropperRef.current) {
-        cropperRef.current.destroy();
-        cropperRef.current = null;
-      }
-      setIsCropping(false);
-    }
-  }, [currentFilters, blendImage, blendMode, blendOpacity, textOverlay]);
-
   const handleDownload = async () => {
     if (!canvasRef.current) {
       console.error("Download failed: Canvas reference is null.");
@@ -912,16 +782,6 @@ function Editor() {
 
   const handleDragLeave = () => {
     setIsDragging(false);
-  };
-
-  const toggleCropper = () => {
-    setIsCropping((prev) => {
-      console.log('Crop mode:', !prev);
-      return !prev;
-    });
-    setIsDrawing(false);
-    setIsAddingText(false);
-    setIsOverlayActive(false);
   };
 
   const debouncedRotate = useCallback(debounce((degrees) => rotateImage(degrees), 1000), [rotateImage]);
@@ -1264,23 +1124,6 @@ function Editor() {
               <button onClick={() => debouncedFlip('vertical')} disabled={isProcessing || isLoading}>
                 Flip Vertical
               </button>
-              <button onClick={toggleCropper} disabled={isLoading || !editedImage}>
-                {isCropping ? "Cancel Crop" : "Crop"}
-              </button>
-              <select
-                value={cropRatio}
-                onChange={(e) => setCropRatio(parseFloat(e.target.value))}
-                disabled={!isCropping}
-              >
-                {cropRatios.map((ratio) => (
-                  <option key={ratio.value} value={ratio.value}>
-                    {ratio.label}
-                  </option>
-                ))}
-              </select>
-              <button onClick={handleCrop} disabled={!isCropping || isLoading}>
-                Apply Crop
-              </button>
               <button onClick={handleUndo} disabled={historyIndex <= 0}>
                 Undo
               </button>
@@ -1437,30 +1280,26 @@ function Editor() {
             onDragLeave={handleDragLeave}
             ref={canvasContainerRef}
           >
-            {isCropping ? (
-              <img ref={imgRef} src={editedImage} alt="Crop" style={{ display: 'block', maxWidth: '100%', maxHeight: '100%' }} />
-            ) : (
-              <CanvasWrapper
-                editedImage={editedImage}
-                currentFilters={currentFilters}
-                blendImage={blendImage}
-                blendMode={blendMode}
-                blendOpacity={blendOpacity}
-                textOverlay={textOverlay}
-                drawingPaths={drawingPaths}
-                overlayImage={overlayImage}
-                overlayProps={overlayProps}
-                isDrawing={isDrawing}
-                isOverlayActive={isOverlayActive}
-                isLoading={isLoading}
-                handleMouseDown={handleMouseDown}
-                handleMouseMove={handleMouseMove}
-                handleMouseUp={handleMouseUp}
-                canvasRef={canvasRef}
-                previewCanvasRef={previewCanvasRef}
-                tempFilters={tempFilters}
-              />
-            )}
+            <CanvasWrapper
+              editedImage={editedImage}
+              currentFilters={currentFilters}
+              blendImage={blendImage}
+              blendMode={blendMode}
+              blendOpacity={blendOpacity}
+              textOverlay={textOverlay}
+              drawingPaths={drawingPaths}
+              overlayImage={overlayImage}
+              overlayProps={overlayProps}
+              isDrawing={isDrawing}
+              isOverlayActive={isOverlayActive}
+              isLoading={isLoading}
+              handleMouseDown={handleMouseDown}
+              handleMouseMove={handleMouseMove}
+              handleMouseUp={handleMouseUp}
+              canvasRef={canvasRef}
+              previewCanvasRef={previewCanvasRef}
+              tempFilters={tempFilters}
+            />
           </div>
         </div>
 
