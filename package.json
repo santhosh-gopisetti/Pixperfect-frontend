@@ -6,7 +6,6 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "postinstall": "chmod +x node_modules/.bin/vite",
     "lint": "eslint ."
   },
   "dependencies": {
