@@ -3,11 +3,10 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "vite",
-    "build": "npx vite build",
-    "preview": "vite preview",
-    "lint": "eslint ."
-  },
+  "dev": "vite",
+  "build": "node vercel-build.js",
+  "preview": "vite preview"
+},
   "dependencies": {
     "axios": "^1.9.0",
     "lodash": "^4.17.21",
