@@ -44,21 +44,6 @@ function App() {
     navigate('/login', { replace: true });
   };
 
-  // Editing-related images with local paths
-  const editingImages = [
-    {
-      src: '/PUSHPA2 DUAL.png',
-      alt: 'Editing a photo on a laptop',
-    },
-    {
-      src: '/Kalki 70s poster.png',
-      alt: 'Creating digital art with a tablet',
-    },
-    {
-      src: '/JVAS DEVARA.png',
-      alt: 'Adjusting colors with a palette',
-    },
-  ];
 
   // Local fallback image
   const fallbackImage = '/fallback-image.png';
