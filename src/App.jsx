@@ -44,10 +44,6 @@ function App() {
     navigate('/login', { replace: true });
   };
 
-
-  // Local fallback image
-  const fallbackImage = '/fallback-image.png';
-
   return (
     <div className="app-layout">
       <header className="app-header">
@@ -79,17 +75,6 @@ function App() {
               <div className="home-container with-background">
                 <h2>Welcome to PixPerfect</h2>
                 <p>Make your frames visually more appealing !!</p>
-                <div className="editing-images-grid">
-                  {editingImages.map((image, index) => (
-                    <div key={index} className="editing-image-card">
-                      <img
-                        src={image.src}
-                        alt={image.alt}
-                        onError={(e) => (e.target.src = fallbackImage)}
-                      />
-                    </div>
-                  ))}
-                </div>
               </div>
             }
           />

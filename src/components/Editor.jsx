@@ -4,6 +4,9 @@ import axios from 'axios';
 import { debounce, throttle } from 'lodash';
 import "../App.css";
 
+// Updated: Define API_URL using environment variable
+const API_URL ='https://pixperfect-backend-3.onrender.com';
+
 // Memoized CanvasWrapper (unchanged)
 const CanvasWrapper = React.memo(({ editedImage, currentFilters, blendImage, blendMode, blendOpacity, textOverlay, drawingPaths, overlayImage, overlayProps, isDrawing, isOverlayActive, isLoading, handleMouseDown, handleMouseMove, handleMouseUp, canvasRef, previewCanvasRef, tempFilters }) => (
   <div className="canvas-wrapper">
@@ -39,7 +42,7 @@ const CanvasWrapper = React.memo(({ editedImage, currentFilters, blendImage, ble
 ));
 
 function Editor() {
-  // State and refs (removed crop-related states)
+  // State and refs (unchanged)
   const [image, setImage] = useState(null);
   const [editedImage, setEditedImage] = useState(null);
   const [blendImage, setBlendImage] = useState(null);
@@ -148,7 +151,7 @@ function Editor() {
     return { x: rotatedX + newWidth / 2, y: rotatedY + newHeight / 2, newWidth, newHeight };
   }, []);
 
-  // Image loading and initialization (unchanged)
+  // Updated: Image loading with Render backend URL
   useEffect(() => {
     if (!location.state?.image) {
       setError('No image selected. Redirecting to images...');
@@ -167,7 +170,8 @@ function Editor() {
       return;
     }
 
-    const imageUrl = `http://localhost:5001${imagePath}`;
+    // Updated: Use API_URL for image URL
+    const imageUrl = `${API_URL}${imagePath.startsWith('/') ? '' : '/'}${imagePath}`;
     setIsLoading(true);
     setError(null);
 
@@ -222,7 +226,8 @@ function Editor() {
     };
     img.onerror = () => {
       console.error('Failed to load image:', imageUrl);
-      setError('Failed to load image. Redirecting to images...');
+      // Updated: Improved error message
+      setError('Failed to load image. Check if the backend is running and CORS is configured. Redirecting to images...');
       setTimeout(() => {
         navigate('/images', { replace: true });
       }, 2000);
@@ -501,6 +506,7 @@ function Editor() {
     reader.readAsDataURL(file);
   };
 
+  // Updated: Integrate rotation with backend /rotate endpoint
   const rotateImage = useCallback(async (degrees) => {
     if (!editedImage) {
       setError("No image to rotate.");
@@ -513,46 +519,45 @@ function Editor() {
     setIsLoading(true);
 
     try {
-      const img = new Image();
-      img.crossOrigin = "anonymous";
-      img.src = editedImage;
-      await new Promise((resolve, reject) => {
-        img.onload = () => resolve();
-        img.onerror = () => reject(new Error('Failed to load image for rotation'));
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("No authentication token found. Please log in.");
+      }
+
+      // Convert data URL to File
+      const blob = await fetch(editedImage).then((res) => res.blob());
+      const file = new File([blob], "image.png", { type: "image/png" });
+
+      const formData = new FormData();
+      formData.append("image", file);
+      formData.append("degrees", degrees);
+
+      const response = await axios.post(`${API_URL}/rotate`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
       });
 
-      const canvas = document.createElement("canvas");
-      const ctx = canvas.getContext("2d");
-      const resized = resizeImage(img, 400);
-
-      const swap = Math.abs(degrees % 360) === 90 || Math.abs(degrees % 360) === 270;
-      canvas.width = swap ? resized.height : resized.width;
-      canvas.height = swap ? resized.width : resized.height;
-
-      ctx.save();
-      ctx.translate(canvas.width / 2, canvas.height / 2);
-      ctx.rotate((degrees * Math.PI) / 180);
-      ctx.drawImage(resized, -resized.width / 2, -resized.height / 2);
-      ctx.restore();
-
-      const rotatedDataUrl = canvas.toDataURL("image/png");
+      const { imagePath } = response.data;
+      const rotatedImageUrl = `${API_URL}${imagePath.startsWith('/') ? '' : '/'}${imagePath}`;
 
       const newTextCoords = transformCoordinates(
         textOverlay.x,
         textOverlay.y,
-        resized.width,
-        resized.height,
+        canvasRef.current?.width || 400,
+        canvasRef.current?.height || 400,
         degrees
       );
       const newOverlayCoords = transformCoordinates(
         overlayProps.x,
         overlayProps.y,
-        resized.width,
-        resized.height,
+        canvasRef.current?.width || 400,
+        canvasRef.current?.height || 400,
         degrees
       );
 
-      setEditedImage(rotatedDataUrl);
+      setEditedImage(rotatedImageUrl);
       setDrawingPaths([]);
       setOverlayImage(null);
       setOverlayProps({
@@ -572,7 +577,7 @@ function Editor() {
       });
 
       saveToHistory(
-        rotatedDataUrl,
+        rotatedImageUrl,
         currentFilters,
         blendImage,
         blendMode,
@@ -595,12 +600,14 @@ function Editor() {
       setIsProcessing(false);
     } catch (err) {
       console.error('Failed to rotate image:', err);
-      setError('Failed to rotate image: ' + err.message);
+      // Updated: Better error handling
+      setError(err.response?.data?.error || 'Failed to rotate image. Check authentication or backend status.');
       setIsLoading(false);
       setIsProcessing(false);
     }
-  }, [editedImage, currentFilters, blendImage, blendMode, blendOpacity, textOverlay, overlayProps, resizeImage, transformCoordinates]);
+  }, [editedImage, currentFilters, blendImage, blendMode, blendOpacity, textOverlay, overlayProps, transformCoordinates]);
 
+  // Updated: Integrate flipping with backend /flip endpoint
   const flipImage = useCallback(async (direction) => {
     if (!editedImage) {
       setError("No image to flip.");
@@ -613,47 +620,45 @@ function Editor() {
     setIsLoading(true);
 
     try {
-      const img = new Image();
-      img.crossOrigin = "anonymous";
-      img.src = editedImage;
-      await new Promise((resolve, reject) => {
-        img.onload = () => resolve();
-        img.onerror = () => reject(new Error('Failed to load image for flipping'));
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("No authentication token found. Please log in.");
+      }
+
+      // Convert data URL to File
+      const blob = await fetch(editedImage).then((res) => res.blob());
+      const file = new File([blob], "image.png", { type: "image/png" });
+
+      const formData = new FormData();
+      formData.append("image", file);
+      formData.append("direction", direction);
+
+      const response = await axios.post(`${API_URL}/flip`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
       });
 
-      const canvas = document.createElement("canvas");
-      const ctx = canvas.getContext("2d");
-      const resized = resizeImage(img, 400);
-
-      canvas.width = resized.width;
-      canvas.height = resized.height;
-
-      ctx.save();
-      if (direction === 'horizontal') {
-        ctx.scale(-1, 1);
-        ctx.drawImage(resized, -resized.width, 0);
-      } else if (direction === 'vertical') {
-        ctx.scale(1, -1);
-        ctx.drawImage(resized, 0, -resized.height);
-      }
-      ctx.restore();
-
-      const flippedDataUrl = canvas.toDataURL("image/png");
+      const { imagePath } = response.data;
+      const flippedImageUrl = `${API_URL}${imagePath.startsWith('/') ? '' : '/'}${imagePath}`;
 
       let newTextX = textOverlay.x;
       let newTextY = textOverlay.y;
       let newOverlayX = overlayProps.x;
       let newOverlayY = overlayProps.y;
+      const canvasWidth = canvasRef.current?.width || 400;
+      const canvasHeight = canvasRef.current?.height || 400;
 
       if (direction === 'horizontal') {
-        newTextX = canvas.width - textOverlay.x;
-        newOverlayX = canvas.width - overlayProps.x;
+        newTextX = canvasWidth - textOverlay.x;
+        newOverlayX = canvasWidth - overlayProps.x;
       } else if (direction === 'vertical') {
-        newTextY = canvas.height - textOverlay.y;
-        newOverlayY = canvas.height - overlayProps.y;
+        newTextY = canvasHeight - textOverlay.y;
+        newOverlayY = canvasHeight - overlayProps.y;
       }
 
-      setEditedImage(flippedDataUrl);
+      setEditedImage(flippedImageUrl);
       setDrawingPaths([]);
       setOverlayImage(null);
       setOverlayProps({
@@ -673,7 +678,7 @@ function Editor() {
       });
 
       saveToHistory(
-        flippedDataUrl,
+        flippedImageUrl,
         currentFilters,
         blendImage,
         blendMode,
@@ -696,11 +701,12 @@ function Editor() {
       setIsProcessing(false);
     } catch (err) {
       console.error('Failed to flip image:', err);
-      setError('Failed to flip image: ' + err.message);
+      // Updated: Better error handling
+      setError(err.response?.data?.error || 'Failed to flip image. Check authentication or backend status.');
       setIsLoading(false);
       setIsProcessing(false);
     }
-  }, [editedImage, currentFilters, blendImage, blendMode, blendOpacity, textOverlay, overlayProps, resizeImage]);
+  }, [editedImage, currentFilters, blendImage, blendMode, blendOpacity, textOverlay, overlayProps]);
 
   const handleDownload = async () => {
     if (!canvasRef.current) {
@@ -1037,8 +1043,12 @@ function Editor() {
     }
   };
 
+  // Updated: Save to backend with proper URL and error handling
   const handleSave = async () => {
-    if (!canvasRef.current) return;
+    if (!canvasRef.current) {
+      setError("No image to save: Canvas not initialized.");
+      return;
+    }
 
     setIsLoading(true);
     try {
@@ -1072,18 +1082,24 @@ function Editor() {
       formData.append("textOverlay", JSON.stringify(completeTextOverlay));
 
       const token = localStorage.getItem("token");
-      const response = await axios.post("http://localhost:5001/upload", formData, {
+      if (!token) {
+        throw new Error("No authentication token found. Please log in.");
+      }
+
+      const response = await axios.post(`${API_URL}/upload`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data",
         },
       });
 
+      console.log('Image saved successfully:', response.data);
       setIsLoading(false);
       navigate("/images");
     } catch (err) {
       console.error('Failed to save image:', err);
-      setError("Failed to save image.");
+      // Updated: Better error handling
+      setError(err.response?.data?.error || 'Failed to save image. Check authentication or backend status.');
       setIsLoading(false);
     }
   };

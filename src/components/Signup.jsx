@@ -1,6 +1,9 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom'; // Add Link for navigation to login
+import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
+
+// Updated: Define API_URL using environment variable
+const API_URL ='https://pixperfect-backend-3.onrender.com';
 
 function Signup({ setIsAuthenticated }) {
   const [username, setUsername] = useState('');
@@ -26,14 +29,19 @@ function Signup({ setIsAuthenticated }) {
     setMessage('');
 
     try {
-      const response = await axios.post('http://localhost:5001/signup', { username, password });
-      setMessage(response.data.message);
+      // Updated: Use API_URL for /signup endpoint
+      const response = await axios.post(`${API_URL}/signup`, { username, password });
+      setMessage(response.data.message || 'Signup successful! Redirecting to login...');
       setIsAuthenticated(false);
       setTimeout(() => {
         navigate('/login', { replace: true });
       }, 1000);
     } catch (error) {
-      setMessage(error.response?.data?.error || 'Signup failed');
+      // Updated: Improved error handling
+      const errorMsg = error.response?.data?.error || 
+        error.response?.status === 400 ? 'Username already exists' : 
+        'Signup failed. Check backend status.';
+      setMessage(errorMsg);
     } finally {
       setIsLoading(false);
     }
@@ -41,7 +49,6 @@ function Signup({ setIsAuthenticated }) {
 
   return (
     <div className="signup-layout">
-
       <main className="signup-main">
         <div className="signup-container">
           <h2 id="signup-heading">Signup</h2>
@@ -83,7 +90,7 @@ function Signup({ setIsAuthenticated }) {
             </button>
           </form>
           {message && (
-            <p className={message.includes('failed') ? 'error-message' : 'success-message'}>
+            <p className={message.includes('failed') || message.includes('exists') ? 'error-message' : 'success-message'}>
               {message}
             </p>
           )}

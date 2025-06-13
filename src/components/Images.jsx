@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 
+// Updated: Define API_URL using environment variable
+const API_URL ='https://pixperfect-backend-3.onrender.com';
+
 function Images() {
   const [images, setImages] = useState([]);
   const [message, setMessage] = useState('');
@@ -22,13 +25,22 @@ function Images() {
       setMessage('');
 
       try {
-        const response = await axios.get('http://localhost:5001/images', {
+        // Updated: Use API_URL for /images endpoint
+        const response = await axios.get(`${API_URL}/images`, {
           headers: { 'Authorization': `Bearer ${token}` },
         });
         console.log('Fetched images:', response.data);
         setImages(response.data);
       } catch (error) {
-        setMessage(error.response?.data?.error || 'Failed to fetch images');
+        // Updated: Improved error handling
+        const errorMsg = error.response?.data?.error || 
+          error.response?.status === 401 ? 'Session expired. Please log in again.' : 
+          'Failed to fetch images. Check backend status.';
+        setMessage(errorMsg);
+        if (error.response?.status === 401) {
+          localStorage.removeItem('token');
+          navigate('/login', { replace: true });
+        }
       } finally {
         setIsLoading(false);
       }
@@ -42,14 +54,29 @@ function Images() {
     }
 
     const token = localStorage.getItem('token');
+    if (!token) {
+      setMessage('Please login first');
+      navigate('/login', { replace: true });
+      return;
+    }
+
     try {
-      await axios.delete(`http://localhost:5001/image/${id}`, {
+      // Updated: Use API_URL for /image/:id endpoint
+      await axios.delete(`${API_URL}/image/${id}`, {
         headers: { 'Authorization': `Bearer ${token}` },
       });
       setImages(images.filter((image) => image.id !== id));
       setMessage('Image deleted successfully');
     } catch (error) {
-      setMessage(error.response?.data?.error || 'Failed to delete image');
+      // Updated: Improved error handling
+      const errorMsg = error.response?.data?.error || 
+        error.response?.status === 401 ? 'Session expired. Please log in again.' : 
+        'Failed to delete image.';
+      setMessage(errorMsg);
+      if (error.response?.status === 401) {
+        localStorage.removeItem('token');
+        navigate('/login', { replace: true });
+      }
     }
   };
 
@@ -59,8 +86,6 @@ function Images() {
 
   return (
     <div className="images-layout">
-      
-
       <main className="images-main">
         <div className="images-container">
           <h2 id="images-heading">Your Images</h2>
@@ -82,7 +107,8 @@ function Images() {
               {images.map((image) => (
                 <div key={image.id} className="image-card">
                   <img
-                    src={`http://localhost:5001${image.imagePath.startsWith('/') ? '' : '/'}${image.imagePath}`}
+                    // Updated: Use API_URL for image source
+                    src={`${API_URL}${image.imagePath.startsWith('/') ? '' : '/'}${image.imagePath}`}
                     alt={`Uploaded image ${image.id}`}
                     crossOrigin="anonymous"
                   />

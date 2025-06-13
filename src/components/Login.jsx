@@ -1,6 +1,9 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom'; // Add Link for navigation to signup
+import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
+
+// Updated: Define API_URL using environment variable
+const API_URL ='https://pixperfect-backend-3.onrender.com';
 
 function Login({ setIsAuthenticated }) {
   const [username, setUsername] = useState('');
@@ -26,7 +29,8 @@ function Login({ setIsAuthenticated }) {
     setMessage('');
 
     try {
-      const response = await axios.post('http://localhost:5001/login', { username, password });
+      // Updated: Use API_URL for /login endpoint
+      const response = await axios.post(`${API_URL}/login`, { username, password });
       localStorage.setItem('token', response.data.token);
       setIsAuthenticated(true);
       setMessage('Login successful');
@@ -34,7 +38,11 @@ function Login({ setIsAuthenticated }) {
         navigate('/images', { replace: true });
       }, 1000);
     } catch (error) {
-      setMessage(error.response?.data?.error || 'Login failed');
+      // Updated: Improved error handling
+      const errorMsg = error.response?.data?.error || 
+        error.response?.status === 401 ? 'Invalid username or password' : 
+        'Login failed. Check backend status.';
+      setMessage(errorMsg);
     } finally {
       setIsLoading(false);
     }
@@ -42,8 +50,6 @@ function Login({ setIsAuthenticated }) {
 
   return (
     <div className="login-layout">
-      
-
       <main className="login-main">
         <div className="login-container">
           <h2 id="login-heading">Login</h2>
@@ -85,7 +91,7 @@ function Login({ setIsAuthenticated }) {
             </button>
           </form>
           {message && (
-            <p className={message.includes('failed') ? 'error-message' : 'success-message'}>
+            <p className={message.includes('successful') ? 'success-message' : 'error-message'}>
               {message}
             </p>
           )}
