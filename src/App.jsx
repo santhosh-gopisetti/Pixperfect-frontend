@@ -14,6 +14,7 @@ import Images from './components/Images.jsx';
 import Upload from './components/Upload';
 import './App.css';
 
+// ProtectedRoute to restrict access
 function ProtectedRoute({ isAuthenticated, children }) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -35,11 +36,7 @@ function App() {
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-    if (token) {
-      setIsAuthenticated(true);
-    } else {
-      setIsAuthenticated(false);
-    }
+    setIsAuthenticated(!!token);
   }, []);
 
   const handleLogout = () => {
@@ -76,16 +73,22 @@ function App() {
           <Route
             path="/"
             element={
-              <div className="home-container with-background">
+              <div
+                className="home-container with-background"
+                style={{ backgroundImage: 'url(/RRR.jpg)' }}
+              >
                 <h2>Welcome to PixPerfect</h2>
                 <p>Make your frames visually more appealing !!</p>
-                <button className="cta-button" onClick={() => navigate('/upload')}>
-                  Upload Now
-                </button>
-                <div className="homepage-images">
-                  <img src="/KHALEJA DUNE.jpg" alt="Banner 1" className="home-banner" />
-                  <img src="/Kalki 70s poster.jpg" alt="Banner 2" className="home-banner" />
-                  <img src="/JVAS DEVARA.jpg" alt="Banner 3" className="home-banner" />
+                <div className="editing-images-grid">
+                  <div className="editing-image-card">
+                    <img src="/KHALEJA DUNE.jpg" alt="Banner 1" />
+                  </div>
+                  <div className="editing-image-card">
+                    <img src="/Kalki 70s poster.jpg" alt="Banner 2" />
+                  </div>
+                  <div className="editing-image-card">
+                    <img src="/JVAS DEVARA.jpg" alt="Banner 3" />
+                  </div>
                 </div>
               </div>
             }
