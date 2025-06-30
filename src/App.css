@@ -108,7 +108,7 @@ body {
 
 .home-container p {
   font-size: 1rem;
-  color: #000000; /* Muted gray for secondary text */
+  color: #6b7280; /* Muted gray for secondary text */
   margin-bottom: var(--spacing-lg);
 }
 

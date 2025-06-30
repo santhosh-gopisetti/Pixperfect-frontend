@@ -81,7 +81,7 @@ function App() {
                 className="home-container"
                 style={{
                   backgroundImage: 'url(/RRR.jpg)',
-                  backgroundSize: 'contain',
+                  backgroundSize: 'cover',
                   backgroundPosition: 'center',
                   padding: '40px',
                   minHeight: '100vh',
