@@ -1,18 +1,19 @@
 /* CSS Variables for consistent theming */
 :root {
-  --primary-bg: #ffffff; /* White for main background */
-  --secondary-bg: #ffffff; /* White for cards/headers/sidebars */
-  --canvas-bg: #ffffff; /* White for editor canvas */
-  --sidebar-bg: #ffffff; /* White for sidebars */
-  --text-color: #111827; /* Almost black for primary text */
-  --accent-color: #111827; /* Almost black for links/highlights */
-  --active-color: #059669; /* Emerald green for active states */
-  --border-color: #d1d5db; /* Light gray for borders */
-  --border-radius: 4px;
+  --primary-bg: #f4f6f8;
+  --secondary-bg: #ffffff;
+  --canvas-bg: #ffffff;
+  --sidebar-bg: #f9fafb;
+  --text-color: #1f2937;
+  --accent-color: #6366f1;
+  --active-color: #10b981;
+  --border-color: #e5e7eb;
+  --border-radius: 6px;
   --spacing-sm: 0.5rem;
   --spacing-md: 1rem;
-  --spacing-lg: 1.5rem;
+  --spacing-lg: 2rem;
 }
+
 
 /* Reset and base styles */
 * {
