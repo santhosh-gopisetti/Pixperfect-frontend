@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
-import './Auth.css';
 
 // Updated: Define API_URL using environment variable
 const API_URL ='https://pixperfect-backend-3.onrender.com';
