@@ -988,3 +988,22 @@ button.active:hover {
   border-radius: 5px;
   text-align: center;
 }
+.homepage-images {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 30px;
+  flex-wrap: wrap;
+}
+
+.home-banner {
+  width: 300px;
+  height: auto;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  transition: transform 0.3s ease;
+}
+
+.home-banner:hover {
+  transform: scale(1.05);
+}

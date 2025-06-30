@@ -1,4 +1,11 @@
-import { BrowserRouter as Router, Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Link,
+  useNavigate,
+  useLocation
+} from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import Signup from './components/Signup';
 import Login from './components/Login';
@@ -27,7 +34,6 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const navigate = useNavigate();
 
-  // Check authentication status on mount
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
@@ -37,7 +43,6 @@ function App() {
     }
   }, []);
 
-  // Handle logout
   const handleLogout = () => {
     localStorage.removeItem('token');
     setIsAuthenticated(false);
@@ -72,9 +77,24 @@ function App() {
           <Route
             path="/"
             element={
-              <div className="home-container with-background">
+              <div
+                className="home-container"
+                style={{
+                  backgroundImage: 'url(/RRR.jpg)',
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  padding: '40px',
+                  minHeight: '100vh',
+                  color: '#fff'
+                }}
+              >
                 <h2>Welcome to PixPerfect</h2>
                 <p>Make your frames visually more appealing !!</p>
+                <div className="homepage-images">
+                  <img src="/KHALEJA DUNE.jpg" alt="Banner 1" className="home-banner" />
+                  <img src="/Kalki 70s poster.jpg" alt="Banner 2" className="home-banner" />
+                  <img src="/JVAS DEVARA.jpg" alt="Banner 3" className="home-banner" />
+                </div>
               </div>
             }
           />
