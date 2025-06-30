@@ -81,11 +81,12 @@ function App() {
                 className="home-container"
                 style={{
                   backgroundImage: 'url(/RRR.jpg)',
-                  backgroundSize: 'cover',
+                  backgroundSize: 'contain',
                   backgroundPosition: 'center',
                   padding: '40px',
                   minHeight: '100vh',
-                  color: '#fff'
+                  color: '#fff',
+                  opacity:0.5
                 }}
               >
                 <h2>Welcome to PixPerfect</h2>
